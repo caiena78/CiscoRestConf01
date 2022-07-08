@@ -2,7 +2,6 @@ from logging import raiseExceptions
 from operator import truediv
 import string
 from urllib import response
-from numpy import put
 import requests
 import json
 from pprint import pprint
@@ -24,6 +23,7 @@ class policyDirection(Flag):
 
 def errorCheck(response:response):
     if response.status_code >399:
+        print(response.status_code)
         print(response.content)
         return True
     return False 
