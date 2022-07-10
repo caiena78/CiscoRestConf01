@@ -10,6 +10,8 @@ from urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 import datetime
 from enum import Flag
+import re
+import time
 
 
 
@@ -23,6 +25,7 @@ class policyDirection(Flag):
 
 def errorCheck(response:response):
     if response.status_code >399:
+        print(response)
         print(response.status_code)
         print(response.content)
         return True
@@ -31,6 +34,7 @@ def errorCheck(response:response):
 
 def encodeInterface(strInterface):
     strInterface = strInterface.replace("/","%2f")
+    print(strInterface)
     return strInterface
 
 def getdata(device,url):
@@ -60,6 +64,17 @@ def patchdata(device,url,payload):
         returndata=response
     return returndata
 
+def deleteData(device,url):
+    print(url)
+    headers = {"Accept": "application/yang-data+json", "Content-Type": "application/yang-data+json"}
+    response = requests.delete(url=url,auth=(device['user'], device['password']),verify=False, headers=headers)
+    if errorCheck(response):
+        quit()
+    try:
+        returndata=response.json()
+    except:
+        returndata=response
+    return returndata
 
 def getInterface(device,interfaceName:string):
     interfaceName=encodeInterface(interfaceName)
@@ -118,6 +133,14 @@ def setVlan(device,interface,vlantype:vlantype,vlan):
     url = f"https://{device['ip']}:{device['port']}/restconf/data/Cisco-IOS-XE-native:native/interface/GigabitEthernet"
     patchdata(device,url,json.dumps(interface))
 
+def removePortSecurity(device,interfaceName):
+    interfaceName=encodeInterface(interfaceName)
+    baseUrl=f"https://{device['ip']}:{device['port']}/restconf/data/Cisco-IOS-XE-native:native/interface/GigabitEthernet={interfaceName}/switchport/"
+    url = baseUrl+"Cisco-IOS-XE-switch:port-security-cfg"
+    deleteData(device,url)
+    url = baseUrl+"Cisco-IOS-XE-switch:port-security-conf"
+    time.sleep(3)
+    deleteData(device,url)
 
 def enablePortSecurity(device,interface):
     if chkAccessMode(interface) == False:
@@ -125,6 +148,7 @@ def enablePortSecurity(device,interface):
     if chkVoiceVlan(interface) == False:
         setVlan(device,interface,vlantype.access,1164)
         setVlan(device,interface,vlantype.voice,1165)
+    interface["Cisco-IOS-XE-native:GigabitEthernet"]['switchport']['Cisco-IOS-XE-switch:port-security-cfg']=[None]
     interface["Cisco-IOS-XE-native:GigabitEthernet"]['switchport']["Cisco-IOS-XE-switch:port-security-conf"]={
                 "port-security": {
                     "mac-address": {
@@ -192,3 +216,5 @@ interface=servicePolicy(device,interface,policyDirection.direction_out,"OUTPUT-P
 interface=bpduGurad(device,interface)
 
 print(json.dumps(interface,indent=4))
+
+removePortSecurity(device,'1/0/20')
