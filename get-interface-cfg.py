@@ -22,7 +22,6 @@ def getdata(device,url):
 # set up connection parameters in a dictionary
 device = {"ip": os.getenv('switch_ip'), "port": "443", "user": os.getenv('switch_user'), "password": os.getenv('switch_pwd')}
 
-#device = {"ip": "192.168.164.5", "port": "443", "user": "ca14028", "password": "Ilovemywifeandkids07"}
 
 id=encodeInterface("1/0/9")
 url = f"https://{device['ip']}:{device['port']}/restconf/data/Cisco-IOS-XE-native:native/interface/GigabitEthernet={id}"
